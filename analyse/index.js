@@ -20,38 +20,28 @@
     alert("Error!");
   }
 
-  function _handleClick(evt) {
-    let LENGTH   = 16,
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)(),
-        options  = {
-          mediaStream : evt
-        },
-        src      = audioCtx.createMediaStreamSource(evt),
-        analyser = audioCtx.createAnalyser(evt),
-        data   = new Uint8Array(LENGTH),
-        w      = 0,
-        i      = 0;
+  function _handleClick(evt) {    
+    const options = {mimeType: 'video/webm;codecs=vp9'};
+    const recordedChunks = [];
+    const mediaRecorder = new MediaRecorder(stream, options);  
 
-    btn.classList.add("off");
-    analyser.fftSize = 1024;
-    src.connect(analyser);
-
-    setInterval(() => {
-      canvas.width  = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      ctx.fillStyle = "#3e3e3e";
-
-      w = canvas.width / LENGTH,
-
-      analyser.getByteFrequencyData(data);
-
-      for (i = 0; i < LENGTH; ++i) {
-        ctx.rect(i * w, canvas.height - data[i] * 2, w, data[i] * 2);
+    mediaRecorder.addEventListener('dataavailable', function(e) {
+      if (e.data.size > 0) {
+        recordedChunks.push(e.data);
       }
 
-      ctx.fill();
-    }, 20);
+      if(shouldStop === true && stopped === false) {
+        mediaRecorder.stop();
+        stopped = true;
+      }
+    });
+
+    mediaRecorder.addEventListener('stop', function() {
+      downloadLink.href = URL.createObjectURL(new Blob(recordedChunks));
+      downloadLink.download = 'acetest.wav';
+    });
+
+    mediaRecorder.start();
   }
 
 })();
